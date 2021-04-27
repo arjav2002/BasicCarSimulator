@@ -35,12 +35,12 @@ public abstract class Body {
 		forces.clear();
 	}
 	
-	public void tick() {
+	public void tick(double dt) {
 		processForces();
-		vel = vel.add(force.divide(mass));
-		omega = omega.add(new Vector(torque.x/momentOfInertia.x, torque.y/momentOfInertia.y, torque.z/momentOfInertia.z));
-		posn = posn.add(vel);
-		theta = theta.add(omega);
+		vel = vel.add(force.divide(mass).multiply(dt));
+		omega = omega.add(new Vector(torque.x/momentOfInertia.x, torque.y/momentOfInertia.y, torque.z/momentOfInertia.z).multiply(dt));
+		posn = posn.add(vel.multiply(dt));
+		theta = theta.add(omega.multiply(dt));
 		//System.out.println(vel.y + " " + posn.y);
 	}
 	

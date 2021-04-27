@@ -52,4 +52,22 @@ public class Vector {
 		return x + ", " + y + ", " + z;
 	}
 
+	public Vector normalise() {
+		double mag = mag();
+		if(mag != 0) return new Vector(x/mag, y/mag, z/mag);
+		return new Vector();
+	}
+	
+	public static double angle(Vector v1, Vector v2) {
+		return Math.toDegrees(Math.acos(v1.dot(v2)/v1.mag()/v2.mag()));
+	}
+	
+	public double dot(Vector v) {
+		return x*v.x + y*v.y + z*v.z;
+	}
+	
+	public Vector clone() {
+		return new Vector(x, y, z);
+	}
+
 }

@@ -13,8 +13,10 @@ public class FrameTimer {
 		return System.currentTimeMillis() - lastTime >= 1.0/FPS;
 	}
 	
-	public void mark() {
+	public double mark() {
+		long time = lastTime;
 		lastTime = System.currentTimeMillis();
+		return lastTime - time;
 	}
 	
 }

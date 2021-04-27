@@ -14,6 +14,8 @@ public class Window extends JFrame implements KeyListener {
 	private Canvas canvas;
 	private Car car;
 	private boolean keys[];
+	private static final double DEFAULT_TIMESTEP_SECONDS = 0.000001;
+	public static final int WIDTH = 1280, HEIGHT = 1080;
 	
 	public Window(String title, int width, int height) {
 		this.width = width;
@@ -49,20 +51,35 @@ public class Window extends JFrame implements KeyListener {
 		
 		bs.show();
 		g.dispose();
+		//System.out.println("Rendering complete");
 	}
 	
-	public void tick() {
-		car.tick();
+	public void tick(double dt) {
+		car.tick(dt);
 	}
 	
 	public static void main(String[] args) {
-		Window w = new Window("Gea", 1280, 1080);
+		Window w = new Window("Gea", WIDTH, HEIGHT);
 		FrameTimer ft = new FrameTimer(60);
+		long lastTime = System.nanoTime();
+		long nowTime = lastTime;
+		int frames = 0;
 		while(true) {
 			if(ft.shouldRenderNext()) {
-				ft.mark();
-				w.tick();
+				double seconds = ft.mark()/1000;
+				while(seconds > 0) {
+					double dt = Math.min(seconds, DEFAULT_TIMESTEP_SECONDS);
+					w.tick(dt);
+					seconds -= DEFAULT_TIMESTEP_SECONDS;
+				}
 				w.render();
+				frames++;
+			}
+			nowTime = System.nanoTime();
+			if(nowTime - lastTime >= Math.pow(10, 9)) {
+				System.out.println("Frames: " + frames);
+				frames = 0;
+				lastTime = nowTime;
 			}
 		}
 	}
