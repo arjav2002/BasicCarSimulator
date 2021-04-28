@@ -21,6 +21,8 @@ public class Car extends Body {
 	private static final Vector defaultUp = new Vector(0, 0, 1);
 	private Force frForce, flForce, brForce, blForce;
 	private Vector frOmega, flOmega;
+	private int gear;
+	private static final double defaultAccel = 1000;
 	
 	public Car(Window window, Vector posn) {
 		super(posn, new Vector(50, carLength, carBreadth));
@@ -46,9 +48,9 @@ public class Car extends Body {
 		int x = (int)posn.x-(int)size.x/2;
 		int y = -(int)posn.y-(int)size.y/2;
 		GeneralPath polygon = new GeneralPath(GeneralPath.WIND_EVEN_ODD, 4);
-		polygon.moveTo(wheels[0].posn.x, wheels[0].posn.y);
+		polygon.moveTo(Window.WIDTH - wheels[0].posn.x, wheels[0].posn.y);
 		for(int i = 1; i < 4; i++) {
-			polygon.lineTo(wheels[i].posn.x, wheels[i].posn.y);
+			polygon.lineTo(Window.WIDTH - wheels[i].posn.x, wheels[i].posn.y);
 		}
 		polygon.closePath();
 		((Graphics2D)g).draw(polygon);
@@ -56,10 +58,11 @@ public class Car extends Body {
 		g.setFont(new Font("TimesRoman", Font.PLAIN, 25));
 		g.drawString("Extent of turning: " + extentOfTurning, Window.WIDTH/4, 100);
 		g.drawString("Torque: " + torque.z, Window.WIDTH/4, 200);
-		g.drawString("FL omega magnitude: " + flOmega.mag(), Window.WIDTH/4, 400);
+		g.drawString("FL omega : " + flOmega, Window.WIDTH/4, 400);
 		g.drawString("FL tire angle: " + Math.toDegrees(leftTireAngle), Window.WIDTH/4, 500);
-		g.drawString("FR omega magnitude: " + frOmega.mag(), Window.WIDTH*2/3, 400);
+		g.drawString("FR omega : " + frOmega, Window.WIDTH*2/3, 400);
 		g.drawString("FR tire angle: " + Math.toDegrees(rightTireAngle), Window.WIDTH*2/3, 500);
+		g.drawString("Car velocity: " + vel, Window.WIDTH/4, 600);
 		
 		renderWheels(g);
 		renderVector(axle.multiply(50), posn, g, Color.BLUE);
@@ -77,14 +80,21 @@ public class Car extends Body {
 				forces.add(f);
 			}
 			else {
+				Vector axleDirection = axle;
+				if(t.getTirePosn() == TirePosn.BR || t.getTirePosn() == TirePosn.FR) {
+					axleDirection.invert();
+				}
+				axleDirection = Quaternion.rotateAxisAngle(axleDirection, up, tireAngle);
 				f = new Force(t.tick(axle.multiply(accel), dt, applyBrakes, tireAngle), t.posn);
 				forces.add(f);
 			}
 			if(t.getTirePosn() == TirePosn.FL) {
 				flForce = f;
+				flOmega = t.omega;
 			}
 			else if(t.getTirePosn() == TirePosn.FR) {
 				frForce = f;
+				frOmega = t.omega;
 			}
 			else if(t.getTirePosn() == TirePosn.BR) {
 				brForce = f;
@@ -104,17 +114,17 @@ public class Car extends Body {
 		
 		if(window.getKey(KeyEvent.VK_UP)) {
 			if(vel.dot(heading)/heading.mag() < -1) applyBrakes = true;
-			else accel = 500;
+			else accel = defaultAccel;
 		}
 		else if(window.getKey(KeyEvent.VK_DOWN)) {
 			if(vel.dot(heading)/heading.mag() > 1) applyBrakes = true;
-			else accel = -500;
+			else accel = -defaultAccel;
 		}
 		
-		if(window.getKey(KeyEvent.VK_RIGHT) && rightTireAngle < Math.PI/6) {
+		if(window.getKey(KeyEvent.VK_RIGHT) && rightTireAngle > -Math.PI/6) {
 			extentOfTurning += 0.0000002;
 		}
-		else if(window.getKey(KeyEvent.VK_LEFT) && leftTireAngle > -Math.PI/6) {
+		else if(window.getKey(KeyEvent.VK_LEFT) && leftTireAngle < Math.PI/6) {
 			extentOfTurning -= 0.0000002;
 		}
 		else {
@@ -128,13 +138,13 @@ public class Car extends Body {
 		
 		if(extentOfTurning > 0) {
 			radius = 1/(extentOfTurning);
-			rightTireAngle = Math.atan(carLength/radius);
-			leftTireAngle = Math.atan(carLength/(radius + carBreadth));
+			rightTireAngle = -Math.atan(carLength/(radius - carBreadth));
+			leftTireAngle = -Math.atan(carLength/radius);
 		}
 		else if(extentOfTurning < 0) {
 			radius = 1/(extentOfTurning);
-			rightTireAngle = Math.atan(carLength/(radius - carBreadth));
-			leftTireAngle = Math.atan(carLength/radius);
+			rightTireAngle = -Math.atan(carLength/radius);
+			leftTireAngle = -Math.atan(carLength/(radius + carBreadth));
 		}
 		
 		accelerate(accel, dt, applyBrakes);
@@ -166,13 +176,13 @@ public class Car extends Body {
 					Quaternion.rotateAxisAngle(v.subtract(heading.multiply(Wheel.radius)), up, angle).add(w.posn)
 					};
 			GeneralPath polygon = new GeneralPath(GeneralPath.WIND_EVEN_ODD, 4);
-			polygon.moveTo(vecs[0].x, vecs[0].y);
+			polygon.moveTo(Window.WIDTH - vecs[0].x, vecs[0].y);
 			for(int i = 1; i < 4; i++) {
-				polygon.lineTo(vecs[i].x, vecs[i].y);
+				polygon.lineTo(Window.WIDTH - vecs[i].x, vecs[i].y);
 			}
 			polygon.closePath();
 			((Graphics2D)g).draw(polygon);
-			renderVector(w.omega.multiply(50), w.posn, g, Color.RED);
+			renderVector(w.omega.multiply(30), w.posn, g, Color.RED);
 			Force force;
 			switch(w.getTirePosn()) {
 			case BL:
@@ -187,7 +197,7 @@ public class Car extends Body {
 			default:
 				force = flForce;
 			}
-			renderVector(force.amount, force.posn, g, Color.BLUE);
+			renderVector(force.amount.divide(2), force.posn, g, Color.BLUE);
 		}
 	}
 	
@@ -201,6 +211,8 @@ public class Car extends Body {
      void drawArrow(Graphics g1, int x1, int y1, int x2, int y2) {
          Graphics2D g = (Graphics2D) g1.create();
 
+         x1 = Window.WIDTH - x1;
+         x2 = Window.WIDTH - x2;
          double dx = x2 - x1, dy = y2 - y1;
          double angle = Math.atan2(dy, dx);
          int len = (int) Math.sqrt(dx*dx + dy*dy);

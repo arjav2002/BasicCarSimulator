@@ -8,7 +8,7 @@ public class Wheel {
 	 Vector posn;
 	public Vector omega;
 	double moi = 10;
-	double mu = 0.5;
+	double mu = 1;
 	double maxBrakeTorqueMag = 5000*radius;
 	double g = 9.8;
 	
@@ -52,9 +52,7 @@ public class Wheel {
 		double frictionMag = mu*car.mass*g/4; // static kinetic rolling all the same to me
 		Vector deltaOmegaTireFriction = radiusVec.cross(frictionDir.multiply(frictionMag)).multiply(dt).divide(moi);
 		omega = omega.add(deltaOmegaTireFriction);
-		
-		//if(tirePosn == TirePosn.FL) System.out.println("Friction: " + frictionDir.multiply(frictionMag) + "\tcar vel: " + car.vel + "\tangle: " + tireAngle);
-		
+				
 		return frictionDir.multiply(frictionMag);
 	}
 	
